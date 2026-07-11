@@ -1,0 +1,93 @@
+---
+import Base from '../layouts/Base.astro';
+import { readData } from '../lib/data';
+import { withBase, SPECIES_BY_CODE } from '../lib/site';
+const stories = readData('regulatory-stories.json');
+const roleGlyph: Record<string, string> = { 'lncRNA sponge': '◇', miRNA: '△', 'mRNA target': '◯', function: '★' };
+const typeColor: Record<string, string> = { lncRNA: 'var(--n-lncrna)', miRNA: 'var(--n-mirna)', gene: 'var(--n-mrna)', function: 'var(--sea)' };
+---
+<Base title="Regulatory Story" active="/regulatory-story" description="Walk through a single predicted regulatory chain from lncRNA sponge to biological function.">
+  <div class="container section">
+    <h1>Regulatory Story View</h1>
+    <p class="muted" style="max-width:80ch;">
+      A guided walk through individual predicted regulatory chains:
+      <strong>lncRNA sponge → miRNA → mRNA target → biological / epigenetic function</strong>.
+      These illustrate how the layers connect — every link is predicted, not experimentally validated.
+    </p>
+
+    <label class="control no-print" style="max-width:520px; margin:1rem 0;">Choose an example
+      <select id="storySelect">
+        {stories.map((s: any, i: number) => <option value={s.id} selected={i === 0}>{s.title}</option>)}
+      </select>
+    </label>
+
+    {stories.map((s: any, i: number) => (
+      <article class="story" data-id={s.id} hidden={i !== 0}>
+        <div class="flex between">
+          <h2 style="margin:0.2rem 0;">{s.title}</h2>
+          <span class="pill"><em>{SPECIES_BY_CODE[s.species]?.name ?? s.species}</em></span>
+        </div>
+        <p style="max-width:80ch;">{s.summary}</p>
+
+        <!-- Chain -->
+        <div class="chain">
+          {s.chain.map((node: any, j: number) => (
+            <>
+              <div class="chain-node" style={`--c:${typeColor[node.type] ?? 'var(--sea)'}`}>
+                <div class="glyph-lg" aria-hidden="true">{roleGlyph[node.role] ?? '◯'}</div>
+                <div class="cn-label">{node.label}</div>
+                <div class="cn-role">{node.role}</div>
+                {node.epiCategory && <div class="cn-tag">{node.epiCategory}</div>}
+                {node.epiMiRNA && <div class="cn-tag" style="border-color:var(--n-epi); color:var(--n-epi);">epi-miRNA</div>}
+                {node.conserved && <div class="cn-tag">conserved</div>}
+              </div>
+              {j < s.chain.length - 1 && <div class="chain-arrow" aria-hidden="true">→</div>}
+            </>
+          ))}
+        </div>
+
+        <!-- Evidence types -->
+        <div class="grid grid-2" style="margin-top:1rem;">
+          <div class="card">
+            <h3 style="margin-top:0;">Evidence &amp; edge types</h3>
+            <ul class="stack" style="padding-left:1.1rem; margin:0;">
+              {s.evidence.miRNAtoTarget && <li><strong>miRNA → target:</strong> {s.evidence.miRNAtoTarget.relation} <span class={`pill ${s.evidence.miRNAtoTarget.direction === 'negative' ? 'badge-neg' : 'badge-pos'}`}>{s.evidence.miRNAtoTarget.direction}</span></li>}
+              {s.evidence.lncRNAtoMiRNA && <li><strong>lncRNA → miRNA:</strong> {s.evidence.lncRNAtoMiRNA.relation} <span class={`pill ${s.evidence.lncRNAtoMiRNA.direction === 'negative' ? 'badge-neg' : 'badge-pos'}`}>{s.evidence.lncRNAtoMiRNA.direction}</span></li>}
+            </ul>
+            <div class="legend" style="margin-top:0.8rem;">
+              <span class="item"><span class="swatch" style="background:var(--neg)"></span> negative correlation</span>
+              <span class="item"><span class="swatch" style="background:var(--pos)"></span> positive correlation</span>
+              <span class="item">solid = predicted binding + coexpression</span>
+              <span class="item">dashed = coexpression / inferred ceRNA</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">Interpretation</h3>
+            <p>{s.evidence.interpretation}</p>
+            <div class="callout warn small"><strong>Unvalidated.</strong> This chain is a hypothesis assembled from predicted binding and correlation (n = 5, unadjusted p). It has not been experimentally tested and does not establish causation.</div>
+            <a class="btn btn-sm" href={withBase(`/network?sp=${s.species}&seed=${encodeURIComponent(s.seed)}`)}>Open this miRNA in the Network Explorer →</a>
+          </div>
+        </div>
+      </article>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .chain { display:flex; align-items:stretch; gap:0.5rem; flex-wrap:wrap; margin:1rem 0; }
+  .chain-node { flex:1 1 150px; min-width:140px; border:2px solid var(--c); border-radius:var(--radius); background:var(--paper); padding:0.7rem; text-align:center; box-shadow:var(--shadow); }
+  .glyph-lg { font-size:1.6rem; color:var(--c); line-height:1; }
+  .cn-label { font-weight:700; margin-top:0.3rem; word-break:break-word; }
+  .cn-role { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; }
+  .cn-tag { display:inline-block; font-size:0.7rem; margin-top:0.3rem; border:1px solid var(--line); border-radius:4px; padding:0.05rem 0.35rem; color:var(--muted); }
+  .chain-arrow { align-self:center; font-size:1.4rem; color:var(--muted); }
+  @media (max-width:640px){ .chain-arrow{ transform:rotate(90deg); } }
+</style>
+
+<script>
+  const sel = document.getElementById('storySelect') as HTMLSelectElement;
+  const stories = Array.from(document.querySelectorAll<HTMLElement>('.story'));
+  sel?.addEventListener('change', () => {
+    stories.forEach((s) => (s.hidden = s.dataset.id !== sel.value));
+  });
+</script>

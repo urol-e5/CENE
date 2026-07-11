@@ -1,0 +1,90 @@
+---
+import Base from '../layouts/Base.astro';
+import BarChart from '../components/BarChart.astro';
+import { readData } from '../lib/data';
+import { SPECIES, SPECIES_BY_CODE, SPECIES_COLOR, fmtPct } from '../lib/site';
+const meth = readData('methylation.json');
+const globalBars = SPECIES.map((s) => ({ label: s.short, value: meth.species[s.code].globalCpGmethylationPct, color: SPECIES_COLOR[s.code] }));
+const levelClass = (level: string) => level.includes('low') || level.includes('depleted') ? 'badge-neg' : level.includes('elevated') || level.includes('high') ? 'badge-pos' : '';
+---
+<Base title="Methylation Landscape" active="/methylation" description="Global and feature-level DNA methylation across three coral species.">
+  <div class="container section">
+    <h1>Methylation Landscape</h1>
+    <p class="muted" style="max-width:80ch;">
+      DNA methylation across <em>Acropora pulchra</em>, <em>Porites evermanni</em>, and
+      <em>Pocillopora tuahiniensis</em>. These are invertebrate-characteristic methylomes.
+    </p>
+    <div class="callout info" style="margin:1rem 0;">
+      <strong>Coral methylomes are sparse and gene-body-biased.</strong> Unlike the canonical vertebrate
+      promoter-silencing model, invertebrate DNA methylation is concentrated in gene bodies (introns &amp;
+      exons), depleted at promoters (5′UTR), and broadly <em>positively</em> associated with expression.
+      Global CpG methylation here is low (4–10%).
+    </div>
+
+    <h2>Global CpG methylation</h2>
+    <div class="grid grid-3">
+      {SPECIES.map((s) => {
+        const m = meth.species[s.code];
+        return (
+          <div class="card">
+            <div class="flex" style="gap:0.5rem; align-items:center;">
+              <span class="swatch" style={`background:${SPECIES_COLOR[s.code]}; width:16px;height:16px;`}></span>
+              <h3 style="margin:0;"><em>{s.name}</em></h3>
+            </div>
+            <div class="stat" style="margin:0.5rem 0;"><span class="value">{fmtPct(m.globalCpGmethylationPct)}</span><span class="label">global CpG methylation</span></div>
+            <div class="small muted">WGBS mapping efficiency {fmtPct(m.wgbsMappingPct)}</div>
+            <table class="data" style="margin-top:0.5rem;">
+              <thead><tr><th>Sample</th><th>% mCpG</th></tr></thead>
+              <tbody>{m.samples.map((sm: any) => <tr><td>{sm.sample}</td><td class="num">{sm.methylation.toFixed(2)}</td></tr>)}</tbody>
+            </table>
+          </div>
+        );
+      })}
+    </div>
+    <div class="card" style="margin-top:1rem; max-width:640px;"><BarChart bars={globalBars} unit="%" decimals={2} title="Global CpG methylation across species" /></div>
+
+    <h2>Methylation across genomic features</h2>
+    <p class="muted" style="max-width:80ch;">Qualitative feature-level patterns from the manuscript (Figure 1C).
+      <span class="tag-awaiting">Awaiting data</span> A machine-readable per-feature mean-methylation table
+      is not present in the source repository — only a figure. The relative levels below are transcribed
+      from the manuscript text; exact per-feature percentages are pending a numeric summary file.</p>
+    <div class="table-wrap" style="max-width:760px;">
+      <table class="data">
+        <thead><tr><th>Genomic feature</th><th>Relative methylation</th><th>Notes</th></tr></thead>
+        <tbody>
+          {meth.featureQualitative.map((f: any) => (
+            <tr>
+              <td>{f.feature}</td>
+              <td><span class={`pill ${levelClass(f.level)}`}>{f.level}</span></td>
+              <td style="white-space:normal;">{f.note ?? '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted" style="margin-top:0.5rem;">{meth.featureNote}</p>
+
+    <h2>Conserved &amp; species-specific methylation (orthogroups)</h2>
+    <div class="grid grid-4">
+      <div class="card stat"><span class="value">{meth.orthogroups.conservedAllThree.toLocaleString()}</span><span class="label">methylated in all three species</span></div>
+      {SPECIES.map((s) => (
+        <div class="card stat"><span class="value">{meth.species[s.code].orthogroupsUnique.toLocaleString()}</span><span class="label"><em>{s.short}</em> unique</span></div>
+      ))}
+    </div>
+    <p class="small muted" style="margin-top:0.5rem;">
+      {meth.orthogroups.sharedApulPeve} additional orthogroups are methylated in
+      <em>A. pulchra</em> and <em>P. evermanni</em> but not <em>P. tuahiniensis</em>.
+      The far smaller unique count in <em>P. tuahiniensis</em> (226) reflects its lower global methylation.
+    </p>
+
+    <h2>Genome browsers</h2>
+    <p class="muted">Where genomic coordinates exist, methylation and features can be explored in the source coral genome resources:</p>
+    <ul>
+      {SPECIES.map((s) => {
+        const g = SPECIES_BY_CODE[s.code];
+        const url = s.code === 'Peve' ? 'https://www.genoscope.cns.fr/corals/genomes.html' : null;
+        return <li><em>{s.name}</em> — {url ? <a href={url}>Genoscope coral genomes ↗</a> : <span class="muted">genome browser not publicly hosted; see analysis repository</span>}</li>;
+      })}
+    </ul>
+  </div>
+</Base>

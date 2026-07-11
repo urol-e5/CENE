@@ -1,0 +1,54 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Evidence Table" active="/evidence" description="Searchable, sortable table of every predicted interaction with its supporting statistics.">
+  <div class="container section">
+    <h1>Evidence Table</h1>
+    <p class="muted" style="max-width:75ch;">
+      Every displayed interaction with its supporting statistics. Search, sort by any column,
+      filter, and export the current view. Click a row for full detail or to open it in the
+      Network Explorer. Values come directly from the integrated network files
+      (<code>15-miRNA-mRNA-lncRNA-network-ceRNA</code>).
+    </p>
+
+    <div class="card no-print" style="margin:1rem 0;">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); align-items:end;">
+        <label class="control">Species
+          <select id="evSpecies">
+            <option value="Apul">Acropora pulchra</option>
+            <option value="Peve">Porites evermanni</option>
+            <option value="Ptuh">Pocillopora tuahiniensis</option>
+          </select>
+        </label>
+        <label class="control">Search
+          <input type="search" id="evSearch" placeholder="miRNA, gene, category…" />
+        </label>
+        <label class="control">Interaction
+          <select id="evClass">
+            <option value="">All</option>
+            <option value="miRNA-mRNA">miRNA–mRNA</option>
+            <option value="miRNA-lncRNA">miRNA–lncRNA</option>
+            <option value="lncRNA-mRNA">lncRNA–mRNA</option>
+          </select>
+        </label>
+        <label class="control">Direction
+          <select id="evDir">
+            <option value="">All</option>
+            <option value="positive">Positive</option>
+            <option value="negative">Negative</option>
+          </select>
+        </label>
+        <label class="checkbox"><input type="checkbox" id="evEpi" /> Epi-miRNA only</label>
+        <label class="checkbox"><input type="checkbox" id="evCe" /> ceRNA only</label>
+        <button class="btn" id="evCsv">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <div id="evStatus" class="small muted" style="margin-bottom:0.4rem;"></div>
+    <aside id="evDetail" class="card" hidden style="margin-bottom:1rem;"></aside>
+    <div id="evTable" class="table-wrap"></div>
+    <div id="evPager" class="flex" style="justify-content:center; gap:0.8rem; margin-top:0.8rem;"></div>
+  </div>
+</Base>
+
+<script src="../scripts/evidence.ts"></script>

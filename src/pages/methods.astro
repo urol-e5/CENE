@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+import { EXTERNAL } from '../lib/site';
+---
+<Base title="Methods & Caveats" active="/methods" description="How the predicted networks were built, and the limitations that must frame every interpretation.">
+  <div class="container section" style="max-width:80ch;">
+    <h1>Methods &amp; Caveats</h1>
+    <p class="muted">A plain-language summary of how the datasets on this site were produced, and the
+      limitations that must frame every interpretation. See the
+      <a href={EXTERNAL.analysisRepo}>analysis repository</a> for full code and parameters.</p>
+
+    <div class="callout warn">
+      <strong>The single most important caveat.</strong> Every interaction on this site is
+      <strong>computationally predicted</strong> and represents a hypothesis for future experimental
+      testing. None have been experimentally validated. Predicted binding does not establish
+      functional targeting, and correlation does not establish causation.
+    </div>
+
+    <h2>How the data were produced</h2>
+    <dl class="stack">
+      <div><dt><strong>RNA-seq (mRNA) processing</strong></dt>
+        <dd>Reads were quality-trimmed (fastp), aligned to each species genome (HISAT2), and assembled (StringTie); a gene count matrix was produced with prepDE.py.</dd></div>
+      <div><dt><strong>lncRNA discovery</strong></dt>
+        <dd>Assembled transcripts were compared to annotations (gffcompare), size-filtered (&gt;199 bp), and screened for coding potential (CPC2); non-coding transcripts &ge;5 reads in &ge;1 sample were retained and counted (featureCounts).</dd></div>
+      <div><dt><strong>miRNA discovery</strong></dt>
+        <dd>Small RNA-seq reads were processed with ShortStack (de novo + a miRBase/cnidarian reference), and named following Ashey et al. (2026). Known families keep their names; unmatched sequences are labelled <code>-mir-novel-#</code>.</dd></div>
+      <div><dt><strong>Whole-genome bisulfite sequencing (WGBS)</strong></dt>
+        <dd>Reads were trimmed (cutadapt), aligned (Bismark), deduplicated, and methylation extracted; CpGs were filtered to ≥10× coverage in ≥4 of 5 samples (methylKit) before feature and expression analyses.</dd></div>
+      <div><dt><strong>miRNA binding prediction</strong></dt>
+        <dd>miRanda (v3.3) predicted binding to CDS, 5′UTR, and 3′UTR (UTRs defined as 1 kb up/downstream), with strict seed complementarity, score ≥ 100, and energy ≤ −20 kcal/mol. Cnidarian miRNAs bind with near-full complementarity (plant-like), so CDS binding is biologically relevant.</dd></div>
+      <div><dt><strong>Coexpression analysis</strong></dt>
+        <dd>Pairwise Pearson correlation was computed on RPM-normalized counts for each predicted binding pair (and for all lncRNA–mRNA pairs). Significance used an <strong>unadjusted</strong> p&lt;0.05.</dd></div>
+      <div><dt><strong>ceRNA inference</strong></dt>
+        <dd>Candidate ceRNAs are lncRNAs predicted to bind a miRNA, negatively coexpressed with that miRNA, and positively coexpressed with the miRNA's mRNA target — a signature consistent with sequestration and indirect derepression.</dd></div>
+      <div><dt><strong>Epigenetic machinery &amp; epi-miRNAs</strong></dt>
+        <dd>Epigenetic-machinery homologs were identified (blastp against curated references). miRNAs predicted to target these transcripts are reported as putative epi-miRNAs.</dd></div>
+      <div><dt><strong>Functional enrichment</strong></dt>
+        <dd>Target genes were annotated with GO terms (UniProt/SwissProt) and tested for over-representation with topGO (weight01, Fisher).</dd></div>
+    </dl>
+
+    <h2 id="limitations">Limitations you must keep in mind</h2>
+    <ul class="stack" style="padding-left:1.1rem;">
+      <li><strong>Five biological replicates per species.</strong> All correlations rest on n = 5.</li>
+      <li><strong>Pairwise correlations are sensitive to small sample size.</strong> With n = 5, a handful of points drive each coefficient.</li>
+      <li><strong>Unadjusted p-values.</strong> Interactions were prioritized by correlation magnitude (|r| ≈ 0.88 at p&lt;0.05, n = 5), not multiple-testing-corrected significance — expect false positives.</li>
+      <li><strong>Predicted binding ≠ functional targeting.</strong> miRanda predicts thermodynamically plausible duplexes, not validated regulation.</li>
+      <li><strong>Positive coexpression is common and ambiguous.</strong> It may reflect co-regulation, indirect loops, or non-canonical effects rather than repression.</li>
+      <li><strong>ceRNA relationships are inferred, not validated.</strong> They are consistent with sponge behaviour but not demonstrated experimentally.</li>
+      <li><strong>Genome assembly quality varies</strong> among species and influences target prediction; cross-species comparisons should be interpreted cautiously.</li>
+      <li><strong>Network edges are hypotheses</strong> for future experimental testing, not established mechanisms.</li>
+    </ul>
+
+    <h2>Language we use (and avoid)</h2>
+    <p>We say “predicted to target”, “putatively interacts”, “consistent with”, “candidate ceRNA”, and
+      “hypothesized regulatory relationship”. We avoid “proves”, “controls”, or “causes” unless directly
+      supported by experiment — which, here, they are not.</p>
+
+    <p class="small muted">Statistics and framing on this page are transcribed from the manuscript
+      <em>“Multi-Layered Epigenetic Regulation in Three Reef-Building Corals.”</em></p>
+  </div>
+</Base>

@@ -1,0 +1,156 @@
+---
+import Base from '../layouts/Base.astro';
+import { readData } from '../lib/data';
+import { SPECIES, SPECIES_COLOR, EXTERNAL, fmtInt } from '../lib/site';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const summary = readData('summary.json');
+const shared = summary.shared;
+const totalEpiPairs = SPECIES.reduce((a, s) => a + summary.cards[s.code].epiMiRNAtargetPairs, 0);
+---
+<Base title="Home" active="/">
+  <section class="hero">
+    <div class="container">
+      <h1>Coral Epigenetic Network Explorer</h1>
+      <p class="lede">
+        Explore predicted regulatory relationships among <strong>miRNAs</strong>,
+        <strong>lncRNAs</strong>, <strong>mRNAs</strong>, <strong>DNA methylation</strong>,
+        and <strong>epigenetic machinery</strong> across three reef-building coral species —
+        the first described <strong>epi-miRNA</strong> and <strong>ceRNA</strong> networks in cnidarians.
+      </p>
+      <div class="flex" style="margin-top:0.8rem; gap:0.5rem;">
+        {SPECIES.map((s) => (
+          <span class="pill" style={`border-color:${SPECIES_COLOR[s.code]}`}>
+            <span class="swatch" style={`background:${SPECIES_COLOR[s.code]}`}></span>
+            <em>{s.name}</em>
+          </span>
+        ))}
+      </div>
+      <div class="entrypoints">
+        <a class="entry" href={`${base}/network`}>
+          <div class="t">🕸 Explore networks →</div>
+          <div class="d">Interactive multilayer regulatory graph with filters, presets, and evidence.</div>
+        </a>
+        <a class="entry" href={`${base}/compare`}>
+          <div class="t">⚖ Compare species →</div>
+          <div class="d">Side-by-side miRNA, lncRNA, methylation, ceRNA and epi-miRNA statistics.</div>
+        </a>
+        <a class="entry" href={`${base}/epigenetic-machinery`}>
+          <div class="t">🧬 Investigate epigenetic machinery →</div>
+          <div class="d">Which miRNAs putatively target TET3, MBD, AGO, TNRC6 and other machinery.</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <section class="section">
+      <div class="callout warn" style="margin-top:1.2rem;">
+        <strong>Read this first.</strong> Every interaction shown here is
+        <strong>computationally predicted</strong> from sequence complementarity (miRanda) and/or
+        expression coexpression (Pearson correlation, n = 5 per species, unadjusted p-values).
+        These are <em>hypothesized</em> regulatory relationships for future experimental testing —
+        they are not experimentally validated, and correlation does not establish causation.
+        See <a href={`${base}/methods`}>Methods &amp; Caveats</a>.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>What this study did</h2>
+      <p style="max-width:72ch;">
+        The study integrates matched RNA-seq, small RNA-seq, and whole-genome bisulfite
+        sequencing across <em>Acropora pulchra</em>, <em>Porites evermanni</em>, and
+        <em>Pocillopora tuahiniensis</em> to characterize DNA methylation, miRNAs, and lncRNAs and,
+        for the first time in cnidarians, to identify predicted <strong>epi-miRNAs</strong>
+        (miRNAs targeting epigenetic machinery) and <strong>competing endogenous RNA (ceRNA)</strong>
+        networks (lncRNAs predicted to sequester miRNAs away from their mRNA targets).
+      </p>
+
+      <div class="grid grid-4" style="margin-top:1rem;">
+        <div class="card stat"><span class="value">3</span><span class="label">coral species integrated</span></div>
+        <div class="card stat"><span class="value">{shared.miRNAconservedAllThree}</span><span class="label">miRNAs conserved across all three</span></div>
+        <div class="card stat"><span class="value">{totalEpiPairs}</span><span class="label">predicted epi-miRNA target pairs</span></div>
+        <div class="card stat"><span class="value">{fmtInt(shared.methylationOrthogroupsConserved)}</span><span class="label">orthogroups methylated in all three</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>The regulatory layers</h2>
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <svg viewBox="0 0 760 300" width="100%" style="max-width:760px;" role="img"
+               aria-label="Multilayer regulatory diagram. DNA methylation overlays gene loci. A miRNA (triangle) targets an mRNA (ellipse) and epigenetic machinery. An lncRNA (diamond) acts as a competing endogenous RNA that sequesters the miRNA, relieving repression of the mRNA.">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#5a7079" />
+              </marker>
+              <marker id="bar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                <path d="M8 1 L8 9" stroke="#b8432e" stroke-width="2" />
+              </marker>
+            </defs>
+            <!-- DNA methylation track -->
+            <rect x="40" y="30" width="680" height="26" rx="6" fill="#0f3a4d" opacity="0.12" />
+            <text x="48" y="47" font-size="12" fill="#0f3a4d" font-weight="700">DNA methylation (gene-body biased) ● ○ ● ○ ● ●</text>
+            <!-- lncRNA (diamond) -->
+            <g>
+              <polygon points="130,150 165,175 130,200 95,175" fill="#3b6ea5" />
+              <text x="130" y="180" text-anchor="middle" font-size="11" fill="#fff" font-weight="700">lncRNA</text>
+              <text x="130" y="222" text-anchor="middle" font-size="10.5" fill="#5a7079">ceRNA “sponge”</text>
+            </g>
+            <!-- miRNA (triangle) -->
+            <g>
+              <polygon points="360,150 390,205 330,205" fill="#e07a3f" />
+              <text x="360" y="196" text-anchor="middle" font-size="11" fill="#fff" font-weight="700">miRNA</text>
+            </g>
+            <!-- mRNA (ellipse) -->
+            <g>
+              <ellipse cx="600" cy="120" rx="50" ry="30" fill="#6bb0a6" />
+              <text x="600" y="124" text-anchor="middle" font-size="11" fill="#08343a" font-weight="700">mRNA</text>
+            </g>
+            <!-- epi machinery (hexagon) -->
+            <g>
+              <polygon points="600,215 632,233 632,269 600,287 568,269 568,233" fill="#7c4fa0" />
+              <text x="600" y="256" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">epi-</text>
+              <text x="600" y="268" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">machinery</text>
+            </g>
+            <!-- edges -->
+            <line x1="392" y1="170" x2="548" y2="128" stroke="#b8432e" stroke-width="2.4" marker-end="url(#bar)" />
+            <text x="470" y="140" font-size="10.5" fill="#b8432e" font-weight="700">predicted repression</text>
+            <line x1="392" y1="185" x2="566" y2="245" stroke="#b8432e" stroke-width="2.4" stroke-dasharray="1 0" marker-end="url(#bar)" />
+            <text x="452" y="235" font-size="10.5" fill="#7c4fa0" font-weight="700">epi-miRNA targeting</text>
+            <line x1="166" y1="175" x2="326" y2="180" stroke="#3b6ea5" stroke-width="2.4" marker-end="url(#arrow)" />
+            <text x="205" y="168" font-size="10.5" fill="#3b6ea5" font-weight="700">sequesters miRNA</text>
+          </svg>
+        </div>
+        <p class="small muted" style="margin-top:0.6rem;">
+          A simplified multilayer view. Node shapes (not colour alone) distinguish molecule types
+          throughout the site: <strong>△ miRNA</strong>, <strong>◇ lncRNA</strong>,
+          <strong>◯ mRNA</strong>, <strong>⬡ epigenetic machinery</strong>. Red bars mark predicted
+          repression; blue arrows mark ceRNA sequestration.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Where to go next</h2>
+      <div class="grid grid-3">
+        <a class="card" href={`${base}/regulatory-story`} style="text-decoration:none;color:inherit;">
+          <h3>Regulatory Story View</h3>
+          <p class="small muted">Walk through a single predicted chain: lncRNA sponge → miRNA → mRNA target → function, including the ptuh-mir-novel-4 → TNRC6 example.</p>
+        </a>
+        <a class="card" href={`${base}/methylation`} style="text-decoration:none;color:inherit;">
+          <h3>Methylation Landscape</h3>
+          <p class="small muted">Global CpG methylation and gene-body-biased, invertebrate-characteristic methylomes across features.</p>
+        </a>
+        <a class="card" href={`${base}/evidence`} style="text-decoration:none;color:inherit;">
+          <h3>Evidence Table</h3>
+          <p class="small muted">Every displayed interaction — searchable, sortable, and downloadable with its supporting statistics.</p>
+        </a>
+      </div>
+      <p style="margin-top:1rem;" class="flex">
+        <a class="btn btn-outline" href={EXTERNAL.analysisRepo}>Analysis repository ↗</a>
+        <a class="btn btn-outline" href={`${base}/downloads`}>Downloads</a>
+        <a class="btn btn-outline" href={EXTERNAL.fullNetwork}>Full Cytoscape network ↗</a>
+      </p>
+    </section>
+  </div>
+</Base>

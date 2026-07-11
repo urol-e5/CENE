@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+import { readData } from '../lib/data';
+import { withBase, EXTERNAL } from '../lib/site';
+const downloads = readData('downloads.json');
+const manifest = readData('data-manifest.json');
+const groups: Record<string, any[]> = {};
+for (const d of downloads) (groups[d.group] ||= []).push(d);
+const fmtSize = (b: number | null) => b == null ? '—' : b < 1024 ? `${b} B` : b < 1048576 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1048576).toFixed(1)} MB`;
+---
+<Base title="Downloads" active="/downloads" description="Download the web-ready datasets and their original source files.">
+  <div class="container section">
+    <h1>Downloads</h1>
+    <p class="muted" style="max-width:78ch;">
+      Web-ready datasets generated for this site, plus links to their original source files in the
+      <a href={EXTERNAL.analysisRepo}>analysis repository</a>. Generated JSON is produced by the
+      preprocessing pipeline (<code>scripts/build_web_data/</code>); see the
+      <a href={withBase('/data/data-manifest.json')}>data manifest</a> for full provenance.
+    </p>
+
+    {Object.entries(groups).map(([group, items]) => (
+      <section style="margin-top:1.4rem;">
+        <h2 style="margin-top:0;">{group}</h2>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>File</th><th>Description</th><th>Species</th><th>Type</th><th>Stage</th><th>Size</th><th>Get</th></tr></thead>
+            <tbody>
+              {items.map((d) => (
+                <tr>
+                  <td><code>{d.file ? d.file.split('/').pop() : d.rawPath?.split('/').pop()}</code></td>
+                  <td style="white-space:normal; max-width:36ch;">{d.desc}</td>
+                  <td>{d.species}</td>
+                  <td>{d.type}</td>
+                  <td>{d.kind}</td>
+                  <td class="num">{fmtSize(d.sizeBytes)}</td>
+                  <td>
+                    {d.file
+                      ? <a class="btn btn-sm" href={withBase(`/data/${d.file}`)} download>⬇ JSON</a>
+                      : <a class="btn btn-sm btn-outline" href={d.source}>Source ↗</a>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    ))}
+
+    <h2>Data manifest</h2>
+    <p class="small muted">Generated {new Date(manifest.generated).toISOString().slice(0, 10)} by <code>{manifest.preprocessingScript}</code>.</p>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Dataset</th><th>Species</th><th>Source (deep-dive-expression)</th><th>Generated</th><th>Rows</th></tr></thead>
+        <tbody>
+          {manifest.datasets.map((d: any) => (
+            <tr><td>{d.name}</td><td>{d.species}</td><td style="white-space:normal;"><code>{d.source}</code></td><td><code>{d.generated}</code></td><td class="num">{d.rows.toLocaleString()}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:1rem;" class="flex">
+      <a class="btn btn-outline" href={withBase('/data/data-manifest.json')}>data-manifest.json</a>
+      <a class="btn btn-outline" href={withBase('/data/build-summary.json')}>build-summary.json</a>
+      <a class="btn btn-outline" href={withBase('/data/dictionaries/network.json')}>data dictionary</a>
+    </p>
+  </div>
+</Base>

@@ -1,0 +1,139 @@
+---
+import Base from '../layouts/Base.astro';
+import BarChart from '../components/BarChart.astro';
+import { readData } from '../lib/data';
+import { SPECIES, SPECIES_COLOR, fmtInt, fmtPct, fmtNum } from '../lib/site';
+const summary = readData('summary.json');
+const mir100 = readData('mir100.json');
+const meth = readData('methylation.json');
+const col = (code: string) => SPECIES_COLOR[code];
+const bars = (key: string) => SPECIES.map((s) => ({ label: s.short, value: summary.charts[key].find((d: any) => d.code === s.code).value, color: col(s.code) }));
+
+const cardRows: { key: string; label: string; fmt: (v: number) => string }[] = [
+  { key: 'miRNAs', label: 'miRNAs', fmt: fmtInt },
+  { key: 'lncRNAs', label: 'lncRNAs', fmt: fmtInt },
+  { key: 'globalCpGmethylationPct', label: 'Global CpG methylation', fmt: (v) => fmtPct(v) },
+  { key: 'predictedMiRNAmRNA', label: 'Predicted miRNA–mRNA interactions', fmt: fmtInt },
+  { key: 'sigCoexprMiRNAmRNA', label: 'Sig. coexpressed miRNA–mRNA (p<0.05)', fmt: fmtInt },
+  { key: 'miRNAlncRNAinteractions', label: 'Predicted miRNA–lncRNA interactions', fmt: fmtInt },
+  { key: 'ceRNAlncRNAs', label: 'Putative ceRNA lncRNAs', fmt: fmtInt },
+  { key: 'epiMiRNAtargetPairs', label: 'Epi-miRNA target pairs', fmt: fmtInt },
+];
+---
+<Base title="Compare Species" active="/compare" description="Side-by-side comparison of miRNA, lncRNA, methylation, ceRNA and epi-miRNA statistics across three corals.">
+  <div class="container section">
+    <h1>Cross-Species Comparison</h1>
+    <p class="muted" style="max-width:78ch;">
+      Headline statistics across <em>Acropora pulchra</em>, <em>Porites evermanni</em>, and
+      <em>Pocillopora tuahiniensis</em>. Species are distinguished by colour <strong>and</strong>
+      abbreviation labels throughout.
+    </p>
+    <div class="callout" style="margin:1rem 0;">
+      <strong>Interpret cross-species differences cautiously.</strong> Genome assembly quality varies
+      substantially among the three taxa (see <a href="../methods">Methods</a>), which affects
+      transcript and interaction counts. Sequence conservation does not imply conserved regulatory function.
+    </div>
+
+    <!-- Summary cards -->
+    <div class="grid grid-3">
+      {SPECIES.map((s) => (
+        <div class="card">
+          <div class="flex" style="gap:0.5rem; align-items:center;">
+            <span class="swatch" style={`background:${col(s.code)}; width:16px; height:16px;`}></span>
+            <h3 style="margin:0;"><em>{s.name}</em></h3>
+          </div>
+          <div class="small muted">{s.code} · {summary.cards[s.code].proteinCodingGenes.toLocaleString()} protein-coding genes</div>
+          <dl class="dl" style="margin-top:0.6rem;">
+            {cardRows.map((r) => (
+              <><dt>{r.label}</dt><dd style="text-align:right; font-weight:700;">{r.fmt(summary.cards[s.code][r.key])}</dd></>
+            ))}
+            <dt>Mean prop. positive targets</dt><dd style="text-align:right; font-weight:700;">{fmtNum(summary.cards[s.code].meanPropPositiveTargets, 2)}</dd>
+          </dl>
+        </div>
+      ))}
+    </div>
+
+    <!-- Comparative charts -->
+    <h2>Comparative charts</h2>
+    <div class="grid grid-2">
+      <div class="card"><BarChart bars={bars('miRNAcounts')} title="miRNA count" /></div>
+      <div class="card"><BarChart bars={bars('lncRNAcounts')} title="lncRNA count" /></div>
+      <div class="card"><BarChart bars={bars('methylation')} unit="%" decimals={2} title="Global CpG methylation" caption="Aggregated across all samples (WGBS)." /></div>
+      <div class="card"><BarChart bars={bars('ceRNA')} title="Putative ceRNA lncRNAs" /></div>
+      <div class="card"><BarChart bars={bars('epiMiRNA')} title="Epi-miRNA target pairs" /></div>
+      <div class="card"><BarChart bars={bars('propPositive')} decimals={2} max={1} title="Mean per-miRNA proportion of positively coexpressed targets" caption="A. pulchra miRNAs trend toward more positive target coexpression." /></div>
+    </div>
+
+    <!-- Binding region distribution (from loaded networks) -->
+    <h2>Predicted binding region distribution</h2>
+    <p class="small muted">Counts of predicted miRNA-binding edges by region in the significantly coexpressed (p&lt;0.05) network. <em>A. pulchra</em> miRNAs are more CDS-biased.</p>
+    <div class="table-wrap" style="max-width:640px;">
+      <table class="data">
+        <thead><tr><th>Species</th><th>CDS</th><th>5′UTR</th><th>3′UTR</th><th>lncRNA</th></tr></thead>
+        <tbody>
+          {SPECIES.map((s) => {
+            const r = summary.charts.bindingRegion.find((d: any) => d.code === s.code);
+            return <tr><td><em>{s.short}</em></td><td class="num">{fmtInt(r.CDS)}</td><td class="num">{fmtInt(r['5UTR'])}</td><td class="num">{fmtInt(r['3UTR'])}</td><td class="num">{fmtInt(r.lncRNA)}</td></tr>;
+          })}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Epi-miRNA target categories -->
+    <h2>Epi-miRNA target categories</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Category</th><th><em>A. pulchra</em></th><th><em>P. evermanni</em></th><th><em>P. tuahiniensis</em></th></tr></thead>
+        <tbody>
+          {summary.charts.epiCategories.map((c: any) => (
+            <tr><td>{c.category}</td><td class="num">{c.Apul}</td><td class="num">{c.Peve}</td><td class="num">{c.Ptuh}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- miR-100 panel -->
+    <h2 id="mir100">miR-100 comparison</h2>
+    <div class="callout info" style="margin-bottom:1rem;">{mir100.note}</div>
+    <div class="grid grid-3">
+      {SPECIES.map((s) => {
+        const m = mir100.bySpecies[s.code];
+        return (
+          <div class="card">
+            <div class="flex between">
+              <h3 style="margin:0;"><em>{s.short}</em> · miR-100</h3>
+              <span class={`pill ${m.dominantDirection === 'positive' ? 'badge-pos' : 'badge-neg'}`}>{m.dominantDirection}</span>
+            </div>
+            <dl class="dl" style="margin-top:0.5rem;">
+              <dt>Interactions (p&lt;0.05)</dt><dd style="text-align:right;">{m.interactions}</dd>
+              <dt>Positive / negative</dt><dd style="text-align:right;">{m.positive} / {m.negative}</dd>
+              <dt>mRNA / lncRNA targets</dt><dd style="text-align:right;">{m.mrnaTargets} / {m.lncRNAtargets}</dd>
+              <dt>CDS / UTR binding</dt><dd style="text-align:right;">{m.cdsBinding} / {m.utrBinding}</dd>
+            </dl>
+            <div class="small"><strong>Epi-machinery targets:</strong>
+              {m.epiMachineryTargets.length ? (
+                <ul style="margin:0.3rem 0 0; padding-left:1.1rem;">
+                  {m.epiMachineryTargets.map((t: any) => <li>{t.gene} <span class="muted">({t.category}, {t.direction})</span></li>)}
+                </ul>
+              ) : <span class="muted"> none recovered</span>}
+            </div>
+            <div class="small" style="margin-top:0.5rem;"><strong>Enriched functions:</strong> {mir100.enrichment[s.code].join('; ')}.</div>
+          </div>
+        );
+      })}
+    </div>
+    <p class="small muted" style="margin-top:0.6rem;">
+      Interaction, direction, and binding counts are computed from the loaded p&lt;0.05 network;
+      epi-machinery targets and enriched functions are from the manuscript (Results, Table 2).
+      Emphasis: conserved sequence ≠ conserved regulatory function.
+    </p>
+
+    <h2>Methylation &amp; conserved orthogroups</h2>
+    <div class="grid grid-4">
+      <div class="card stat"><span class="value">{fmtInt(meth.orthogroups.conservedAllThree)}</span><span class="label">orthogroups methylated in all three</span></div>
+      {SPECIES.map((s) => (
+        <div class="card stat"><span class="value">{fmtInt(meth.species[s.code].orthogroupsUnique)}</span><span class="label"><em>{s.short}</em> uniquely methylated orthogroups</span></div>
+      ))}
+    </div>
+  </div>
+</Base>

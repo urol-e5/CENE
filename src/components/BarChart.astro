@@ -1,0 +1,54 @@
+---
+// Accessible, print- and colour-vision-friendly horizontal bar chart rendered
+// as inline SVG at build time. Each bar carries a text value label and the
+// series is also exposed as a data table for screen readers.
+export interface Bar { label: string; value: number; color?: string; note?: string; }
+export interface Props {
+  bars: Bar[];
+  unit?: string;
+  title?: string;
+  caption?: string;
+  decimals?: number;
+  max?: number;
+}
+const { bars, unit = '', title, caption, decimals = 0, max } = Astro.props;
+const top = max ?? Math.max(...bars.map((b) => b.value), 0);
+const rowH = 34;
+const gap = 12;
+const labelW = 120;
+const chartW = 560;
+const barMax = chartW - labelW - 70;
+const height = bars.length * (rowH + gap);
+const fmt = (v: number) => v.toLocaleString('en-US', { maximumFractionDigits: decimals });
+---
+<figure class="barchart" style="margin:0;">
+  {title && <figcaption class="small" style="font-weight:700;color:var(--ink);margin-bottom:0.4rem;">{title}</figcaption>}
+  <div style="overflow-x:auto;">
+    <svg viewBox={`0 0 ${chartW} ${height}`} role="img" width="100%" style={`max-width:${chartW}px;`}
+         aria-label={title ? `${title}. Bar chart.` : 'Bar chart'}>
+      {bars.map((b, i) => {
+        const y = i * (rowH + gap);
+        const w = top > 0 ? Math.max((b.value / top) * barMax, b.value > 0 ? 3 : 0) : 0;
+        const color = b.color ?? 'var(--sea)';
+        return (
+          <g>
+            <text x={labelW - 8} y={y + rowH / 2} text-anchor="end" dominant-baseline="middle"
+                  font-size="13" font-style="italic" fill="var(--text)">{b.label}</text>
+            <rect x={labelW} y={y + 4} width={barMax} height={rowH - 8} fill="var(--surface)" rx="4" />
+            <rect x={labelW} y={y + 4} width={w} height={rowH - 8} fill={color} rx="4">
+              <title>{b.label}: {fmt(b.value)}{unit}</title>
+            </rect>
+            <text x={labelW + w + 8} y={y + rowH / 2} dominant-baseline="middle"
+                  font-size="13" font-weight="700" fill="var(--ink)">{fmt(b.value)}{unit}</text>
+          </g>
+        );
+      })}
+    </svg>
+  </div>
+  {caption && <figcaption class="small muted" style="margin-top:0.4rem;">{caption}</figcaption>}
+  <table class="data" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">
+    <caption>{title}</caption>
+    <thead><tr><th>Series</th><th>Value{unit ? ` (${unit})` : ''}</th></tr></thead>
+    <tbody>{bars.map((b) => <tr><td>{b.label}</td><td>{fmt(b.value)}</td></tr>)}</tbody>
+  </table>
+</figure>

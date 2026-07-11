@@ -1,0 +1,80 @@
+---
+import '../styles/global.css';
+import { NAV, EXTERNAL } from '../lib/site';
+
+export interface Props {
+  title: string;
+  description?: string;
+  active?: string;
+}
+const { title, description = 'Interactive companion to a study of multi-layered epigenetic regulation across three reef-building coral species.', active = '' } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const link = (href: string) => (href === '/' ? `${base}/` : `${base}${href}`);
+const isActive = (href: string) => (href === '/' ? active === '/' : active.startsWith(href));
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Coral Epigenetic Network Explorer</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <header class="site-header no-print">
+      <div class="container nav">
+        <a class="brand" href={`${base}/`}>
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="15" fill="#0f3a4d" />
+            <circle cx="10" cy="12" r="3" fill="#e07a3f" />
+            <circle cx="22" cy="11" r="2.6" fill="#4fb0a5" />
+            <circle cx="16" cy="22" r="2.6" fill="#3b6ea5" />
+            <path d="M10 12 L16 22 M22 11 L16 22 M10 12 L22 11" stroke="#9fd0cf" stroke-width="1.3" fill="none" />
+          </svg>
+          <span>Coral Epigenetic Network Explorer</span>
+        </a>
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-links" id="navToggle">☰ Menu</button>
+        <nav class="nav-links" id="nav-links" aria-label="Primary">
+          {NAV.map((n) => (
+            <a href={link(n.href)} aria-current={isActive(n.href) ? 'page' : undefined}>{n.label}</a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer no-print">
+      <div class="container">
+        <div class="flex between" style="align-items:flex-start; gap:1.5rem;">
+          <div style="max-width:60ch;">
+            <strong>Coral Epigenetic Network Explorer</strong> — companion resource to
+            <em>“Multi-Layered Epigenetic Regulation in Three Reef-Building Corals.”</em>
+            All displayed interactions are <strong>computationally predicted</strong>
+            (sequence complementarity and/or expression coexpression) and represent
+            hypotheses for future experimental testing — not validated causal relationships.
+          </div>
+          <div class="flex" style="gap:1rem;">
+            <a href={EXTERNAL.github}>Site repo</a>
+            <a href={EXTERNAL.analysisRepo}>Analysis repo</a>
+            <a href={`${base}/methods`}>Methods &amp; caveats</a>
+            <a href={`${base}/downloads`}>Downloads</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const t = document.getElementById('navToggle');
+      const links = document.getElementById('nav-links');
+      t?.addEventListener('click', () => {
+        const open = links?.classList.toggle('open');
+        t.setAttribute('aria-expanded', String(!!open));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,135 @@
+---
+import Base from '../layouts/Base.astro';
+import { readData } from '../lib/data';
+import { withBase, SPECIES_BY_CODE } from '../lib/site';
+const epi = readData('epimachinery.json');
+const summary = readData('summary.json');
+const cats: string[] = epi.categories;
+const targets: any[] = epi.targets;
+const maxCat = Math.max(...cats.map((c) => epi.categorySummary[c].total));
+const shortSp = (code: string) => SPECIES_BY_CODE[code]?.short ?? code;
+---
+<Base title="Epigenetic Machinery Explorer" active="/epigenetic-machinery" description="Which miRNAs putatively target epigenetic machinery, organized by functional category.">
+  <div class="container section">
+    <h1>Epigenetic Machinery Explorer</h1>
+    <p class="muted" style="max-width:80ch;">
+      Predicted <strong>epi-miRNAs</strong> — miRNAs targeting the enzymes and cofactors that deposit,
+      remove, read, and process epigenetic marks — organized by the manuscript's functional categories.
+      This is, to the authors' knowledge, the first description of epi-miRNAs in cnidarians.
+      {epi.targets.length} unique miRNA–epimachinery target pairs were recovered across the three species.
+    </p>
+    <div class="callout" style="margin:1rem 0;">
+      Roughly half of these pairs are <em>positively</em> coexpressed — which does not match canonical
+      miRNA repression. The exception is DNA-methylation machinery (TET3, MBD, PRDM14), where all
+      observed targets are negatively coexpressed. All relationships are predicted.
+    </div>
+
+    <!-- Category summary (Fig. 3 style: negative | positive) -->
+    <h2>Targets by category</h2>
+    <div class="card">
+      <div class="legend" style="margin-bottom:0.6rem;">
+        <span class="item"><span class="swatch" style="background:var(--neg)"></span> negative coexpression (canonical repression)</span>
+        <span class="item"><span class="swatch" style="background:var(--pos)"></span> positive coexpression</span>
+      </div>
+      {cats.map((c) => {
+        const s = epi.categorySummary[c];
+        const w = (n: number) => `${(n / maxCat) * 100}%`;
+        return (
+          <div class="catrow">
+            <div class="catname">{c}</div>
+            <div class="catbars" title={`${s.negative} negative, ${s.positive} positive`}>
+              <div class="bar neg" style={`width:${w(s.negative)}`}></div>
+              <div class="bar pos" style={`width:${w(s.positive)}`}></div>
+              <span class="catcount">{s.total}</span>
+            </div>
+          </div>
+        );
+      })}
+      <p class="small muted" style="margin-top:0.5rem;">Bar length is total target pairs; split shows negative (left) vs positive (right) coexpression. Compare with manuscript Figure 3.</p>
+    </div>
+
+    <!-- Filters -->
+    <h2>Browse targets</h2>
+    <div class="card no-print" style="margin-bottom:1rem;">
+      <div class="flex" style="gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn btn-sm chip catchip" data-cat="" aria-pressed="true">All categories</button>
+        {cats.map((c) => <button class="btn btn-sm chip catchip" data-cat={c}>{c}</button>)}
+      </div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); margin-top:0.8rem; align-items:end;">
+        <label class="control">Search target / miRNA
+          <input type="search" id="epiSearch" placeholder="TET3, MBD, AGO, TNRC6, DICER…" />
+        </label>
+        <label class="control">Species
+          <select id="epiSpecies"><option value="">All</option><option value="Apul">A. pulchra</option><option value="Peve">P. evermanni</option><option value="Ptuh">P. tuahiniensis</option></select>
+        </label>
+        <label class="control">Direction
+          <select id="epiDir"><option value="">All</option><option value="negative">Negative</option><option value="positive">Positive</option></select>
+        </label>
+      </div>
+    </div>
+
+    <div id="epiCount" class="small muted" style="margin-bottom:0.4rem;"></div>
+    <div class="table-wrap">
+      <table class="data" id="epiTable">
+        <thead><tr><th>Target (gene)</th><th>Category</th><th>Species</th><th>Targeting miRNA</th><th>Direction</th><th>Pearson r</th><th>p-value</th><th>Network</th></tr></thead>
+        <tbody>
+          {targets.map((t) => (
+            <tr class="epirow" data-cat={t.category} data-sp={t.species} data-dir={t.direction}
+                data-search={`${t.proteinShort} ${t.gene} ${t.miRNA} ${t.category}`.toLowerCase()}>
+              <td><strong>{t.proteinShort}</strong> <span class="muted small">{t.gene !== t.proteinShort ? t.gene : ''}</span></td>
+              <td>{t.category}</td>
+              <td><em>{shortSp(t.species)}</em></td>
+              <td>{t.miRNA}{t.conservedMiRNA ? ' ★' : ''}</td>
+              <td>{t.direction === 'positive' ? <span class="pill badge-pos">＋ positive</span> : <span class="pill badge-neg">－ negative</span>}</td>
+              <td class="num">{t.pcc?.toFixed(3)}</td>
+              <td class="num">{t.pValue != null ? t.pValue.toExponential(1) : '—'}</td>
+              <td><a class="btn btn-sm btn-outline" href={withBase(`/network?sp=${t.species}&seed=${encodeURIComponent(t.miRNA)}&epi=1`)}>view →</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted" style="margin-top:0.6rem;">★ = conserved/known miRNA family. Source: <code>12-miRNA-epimachinery/miRNAtargets_mach.csv</code> and manuscript Table 2. All predicted.</p>
+  </div>
+</Base>
+
+<style>
+  .catrow { display:grid; grid-template-columns: 220px 1fr; gap:0.6rem; align-items:center; margin:0.25rem 0; }
+  .catname { font-size:0.85rem; font-weight:600; text-align:right; color:var(--text); }
+  .catbars { display:flex; align-items:center; height:22px; background:var(--surface); border-radius:6px; overflow:hidden; position:relative; }
+  .catbars .bar { height:100%; }
+  .catbars .bar.neg { background:var(--neg); }
+  .catbars .bar.pos { background:var(--pos); }
+  .catcount { position:absolute; right:8px; font-size:0.78rem; font-weight:700; color:var(--muted); }
+  @media (max-width:640px){ .catrow{ grid-template-columns:1fr; } .catname{ text-align:left; } }
+</style>
+
+<script>
+  const rows = Array.from(document.querySelectorAll<HTMLElement>('.epirow'));
+  const chips = Array.from(document.querySelectorAll<HTMLElement>('.catchip'));
+  const search = document.getElementById('epiSearch') as HTMLInputElement;
+  const spSel = document.getElementById('epiSpecies') as HTMLSelectElement;
+  const dirSel = document.getElementById('epiDir') as HTMLSelectElement;
+  const count = document.getElementById('epiCount')!;
+  let cat = '';
+  function apply() {
+    const q = search.value.trim().toLowerCase();
+    let n = 0;
+    for (const r of rows) {
+      const ok = (!cat || r.dataset.cat === cat)
+        && (!spSel.value || r.dataset.sp === spSel.value)
+        && (!dirSel.value || r.dataset.dir === dirSel.value)
+        && (!q || r.dataset.search!.includes(q));
+      r.style.display = ok ? '' : 'none';
+      if (ok) n++;
+    }
+    count.innerHTML = `<strong>${n}</strong> predicted epi-miRNA target pair(s) shown.`;
+  }
+  chips.forEach((c) => c.addEventListener('click', () => {
+    cat = c.dataset.cat || '';
+    chips.forEach((x) => x.setAttribute('aria-pressed', String(x === c)));
+    apply();
+  }));
+  [search, spSel, dirSel].forEach((el) => el.addEventListener('input', apply));
+  apply();
+</script>

@@ -1,0 +1,26 @@
+{
+  "name": "coral-epigenetic-network-explorer",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Coral Epigenetic Network Explorer — interactive publication companion for multi-layered epigenetic regulation in three reef-building corals.",
+  "scripts": {
+    "fetch:data": "node scripts/build_web_data/00_fetch_sources.mjs",
+    "build:data": "node scripts/build_web_data/build.mjs",
+    "validate:data": "node scripts/build_web_data/validate.mjs",
+    "prebuild": "npm run build:data",
+    "dev": "npm run build:data && astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "npm run build:data && vitest run"
+  },
+  "dependencies": {
+    "astro": "^4.16.18",
+    "cytoscape": "^3.30.4"
+  },
+  "devDependencies": {
+    "csv-parse": "^5.6.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
+  }
+}
