@@ -97,7 +97,17 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       <!-- Graph -->
       <section class="net-main">
         <div class="net-toolbar no-print">
-          <div class="flex" style="gap:0.3rem;">
+          <div class="flex" style="gap:0.3rem; align-items:center;">
+            <label class="net-layout-pick" title="Graph layout style">
+              <span class="small muted">Layout</span>
+              <select id="fLayout" class="btn-sm">
+                <option value="concentric">Concentric (miRNA-centred)</option>
+                <option value="cose">Force-directed</option>
+                <option value="breadthfirst">Hierarchical</option>
+                <option value="circle">Circle</option>
+                <option value="grid">Grid</option>
+              </select>
+            </label>
             <button class="btn btn-outline btn-sm" id="btnFit" title="Fit to view">⤢ Fit</button>
             <button class="btn btn-outline btn-sm" id="btnReset" title="Reset view">↺ Reset</button>
             <button class="btn btn-outline btn-sm" id="btnExpand" title="Expand neighbourhood of selection" disabled>＋ Expand</button>
@@ -131,7 +141,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   .chip { background: var(--surface); color: var(--sea); border: 1px solid var(--line); }
   .chip:hover, .chip[aria-pressed="true"] { background: var(--sea); color: #fff; }
   .net-main { min-width: 0; }
-  .net-toolbar { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center; }
+  .net-toolbar { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .net-layout-pick { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .net-layout-pick select { padding: 0.25rem 0.4rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font-size: 0.82rem; }
   #cy { width: 100%; height: 620px; background:
       radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--sea) 8%, var(--paper)), var(--paper));
       border: 1px solid var(--line); border-radius: var(--radius); }
