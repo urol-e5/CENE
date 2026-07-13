@@ -82,6 +82,33 @@ describe.each(CODES)('network integrity — %s', (code) => {
     for (const e of lncMrna) expect(e.region, `${e.id} region`).toBeNull();
   });
 
+  it('the ceRNA view completes the triad with the miRNA→mRNA leg (issue #1)', () => {
+    // A candidate ceRNA lncRNA sponges a miRNA; that miRNA's mRNA targets are the
+    // third leg of the lncRNA → miRNA → mRNA triad and must be flagged isCeRNA,
+    // otherwise the "ceRNA only" filter shows only the lncRNA and miRNA.
+    const ce = net.edges.filter((e: any) => e.isCeRNA);
+    expect(ce.length).toBeGreaterThan(0);
+    const ceMirMrna = ce.filter((e: any) => e.interactionClass === 'miRNA-mRNA');
+    expect(ceMirMrna.length, 'ceRNA view should include miRNA→mRNA edges').toBeGreaterThan(0);
+
+    // miRNAs bound by a ceRNA lncRNA (the sponge binding edges).
+    const statusById = new Map(net.nodes.map((n: any) => [n.id, n.status]));
+    const typeById = new Map(net.nodes.map((n: any) => [n.id, n.type]));
+    const sequestered = new Set<string>();
+    for (const e of net.edges) {
+      if (e.interactionClass !== 'miRNA-lncRNA') continue;
+      const [mir, lnc] = typeById.get(e.source) === 'miRNA' ? [e.source, e.target] : [e.target, e.source];
+      if (statusById.get(lnc) === 'ceRNA') sequestered.add(mir);
+    }
+    // Every flagged miRNA→mRNA edge must involve a sequestered miRNA, and every
+    // miRNA→mRNA edge of a sequestered miRNA must be flagged.
+    for (const e of net.edges) {
+      if (e.interactionClass !== 'miRNA-mRNA') continue;
+      const mir = typeById.get(e.source) === 'miRNA' ? e.source : e.target;
+      expect(e.isCeRNA, `${e.id}`).toBe(sequestered.has(mir));
+    }
+  });
+
   it('every edge region is a filterable binding region or null', () => {
     const REGIONS = new Set(['3UTR', '5UTR', 'CDS', 'lncRNA']);
     for (const e of net.edges) {
