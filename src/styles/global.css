@@ -38,9 +38,9 @@
   --n-epi: #7c4fa0;       /* epigenetic machinery — hexagon */
 
   /* Species hues (paired with abbreviation labels + patterns in charts) */
-  --sp-apul: #1f7a8c;
-  --sp-peve: #bf6b3f;
-  --sp-ptuh: #5b5f97;
+  --sp-apul: #408EC6;
+  --sp-peve: #1E2761;
+  --sp-ptuh: #7A2048;
 
   --radius: 10px;
   --radius-sm: 6px;

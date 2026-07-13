@@ -32,7 +32,7 @@ export const SPECIES_BY_CODE: Record<string, SpeciesInfo> =
   Object.fromEntries(SPECIES.map((s) => [s.code, s]));
 
 export const SPECIES_COLOR: Record<string, string> = {
-  Apul: '#1f7a8c', Peve: '#bf6b3f', Ptuh: '#5b5f97',
+  Apul: '#408EC6', Peve: '#1E2761', Ptuh: '#7A2048',
 };
 
 export const NAV = [
