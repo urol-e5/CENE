@@ -59,7 +59,7 @@ const cardRows: { key: string; label: string; fmt: (v: number) => string }[] = [
       <div class="card"><BarChart bars={bars('miRNAcounts')} title="miRNA count" /></div>
       <div class="card"><BarChart bars={bars('lncRNAcounts')} title="lncRNA count" /></div>
       <div class="card"><BarChart bars={bars('methylation')} unit="%" decimals={2} title="Global CpG methylation" caption="Aggregated across all samples (WGBS)." /></div>
-      <div class="card"><BarChart bars={bars('ceRNA')} title="Putative ceRNA lncRNAs" /></div>
+      <div class="card"><BarChart bars={bars('ceRNA')} title="Putative ceRNA lncRNAs" caption="A small fraction of the total lncRNAs (see lncRNA count); most lncRNAs were not predicted to act as ceRNAs." /></div>
       <div class="card"><BarChart bars={bars('epiMiRNA')} title="Epi-miRNA target pairs" /></div>
       <div class="card"><BarChart bars={bars('propPositive')} decimals={2} max={1} title="Mean per-miRNA proportion of positively coexpressed targets" caption="A. pulchra miRNAs trend toward more positive target coexpression." /></div>
     </div>

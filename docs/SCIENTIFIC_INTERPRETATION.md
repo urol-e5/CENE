@@ -39,6 +39,13 @@ miRNA's mRNA target(s) — a signature *consistent with* sequestration and indir
 derepression. This is an inference, not a demonstration. The TNRC6 example
 (ptuh-mir-novel-4, two lncRNA sponges) is presented as a hypothesis.
 
+ceRNA sponging is only **one** of many possible lncRNA functions (chromatin
+scaffolding, transcriptional and splicing regulation, protein decoys, and others),
+and the ceRNA lens is simply the question this project asked. Only a small fraction
+of the lncRNAs identified in each species met the ceRNA criteria; the **majority
+were not part of any ceRNA network**, and their functions remain uncharacterized.
+Language about lncRNAs on this site should be read with that in mind.
+
 ## Cross-species comparison
 
 Genome-assembly quality varies substantially among the three species (see the

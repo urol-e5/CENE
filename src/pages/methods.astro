@@ -31,7 +31,7 @@ import { EXTERNAL } from '../lib/site';
       <div><dt><strong>Coexpression analysis</strong></dt>
         <dd>Pairwise Pearson correlation was computed on RPM-normalized counts for each predicted binding pair (and for all lncRNA–mRNA pairs). Significance used an <strong>unadjusted</strong> p&lt;0.05.</dd></div>
       <div><dt><strong>ceRNA inference</strong></dt>
-        <dd>Candidate ceRNAs are lncRNAs predicted to bind a miRNA, negatively coexpressed with that miRNA, and positively coexpressed with the miRNA's mRNA target — a signature consistent with sequestration and indirect derepression.</dd></div>
+        <dd>Candidate ceRNAs are lncRNAs predicted to bind a miRNA, negatively coexpressed with that miRNA, and positively coexpressed with the miRNA's mRNA target — a signature <em>consistent with</em> sequestration and indirect derepression, but far from the only interpretation. Only a small minority of the lncRNAs identified in each species met these criteria; the great majority were <strong>not</strong> classified as ceRNA candidates. ceRNA sponging is one of many documented lncRNA functions (e.g. chromatin scaffolding, transcriptional and splicing regulation, decoys for proteins), most of which are not evaluated here.</dd></div>
       <div><dt><strong>Epigenetic machinery &amp; epi-miRNAs</strong></dt>
         <dd>Epigenetic-machinery homologs were identified (blastp against curated references). miRNAs predicted to target these transcripts are reported as putative epi-miRNAs.</dd></div>
       <div><dt><strong>Functional enrichment</strong></dt>
@@ -46,6 +46,7 @@ import { EXTERNAL } from '../lib/site';
       <li><strong>Predicted binding ≠ functional targeting.</strong> miRanda predicts thermodynamically plausible duplexes, not validated regulation.</li>
       <li><strong>Positive coexpression is common and ambiguous.</strong> It may reflect co-regulation, indirect loops, or non-canonical effects rather than repression.</li>
       <li><strong>ceRNA relationships are inferred, not validated.</strong> They are consistent with sponge behaviour but not demonstrated experimentally.</li>
+      <li><strong>ceRNA is one of several possible lncRNA functions.</strong> Only a small fraction of the lncRNAs identified were predicted to act as ceRNAs; the majority were not part of any ceRNA network, and their functions — which need not involve miRNA sponging at all — remain uncharacterized. The ceRNA framing used across this site reflects the questions asked, not the full functional repertoire of these transcripts.</li>
       <li><strong>Genome assembly quality varies</strong> among species and influences target prediction; cross-species comparisons should be interpreted cautiously.</li>
       <li><strong>Network edges are hypotheses</strong> for future experimental testing, not established mechanisms.</li>
     </ul>
