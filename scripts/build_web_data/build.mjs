@@ -112,7 +112,7 @@ for (const sp of SPECIES) {
     const sN = nodeById.get(source), tN = nodeById.get(target);
     if (!sN || !tN) { missingEndpoint++; continue; }
     const sType = sN.type, tType = tN.type;
-    const region = (r.region && r.region !== 'NA') ? r.region : null;
+    const rawRegion = (r.region && r.region !== 'NA') ? r.region : null;
 
     // Classify interaction by the pair of node types.
     const set = new Set([sType, tType]);
@@ -120,6 +120,13 @@ for (const sp of SPECIES) {
     if (set.has('miRNA') && set.has('gene')) interactionClass = 'miRNA-mRNA';
     else if (set.has('miRNA') && set.has('lncRNA')) interactionClass = 'miRNA-lncRNA';
     else interactionClass = 'lncRNA-mRNA';
+
+    // `region` is the predicted miRNA binding region (3UTR/5UTR/CDS/lncRNA).
+    // The source tags lncRNA–mRNA coexpression pairs with the sentinel
+    // "lncRNA_mRNA" — a pair-type label, not a binding region — so normalize it
+    // to null. Keeping the sentinel makes these edges fail the region filter in
+    // the Network Explorer, hiding all lncRNA–mRNA coexpression edges (issue #2).
+    const region = interactionClass === 'lncRNA-mRNA' ? null : rawRegion;
 
     const pccDir = num(r.PCC_direction);
     const direction = pccDir === null ? null : (pccDir >= 0 ? 'positive' : 'negative');
