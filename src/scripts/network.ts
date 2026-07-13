@@ -293,7 +293,8 @@ function interpret(e: EdgeRec, src: string, tgt: string): string {
   if (e.interactionClass === 'lncRNA-mRNA') return `The lncRNA and mRNA are ${e.direction}ly coexpressed, consistent with shared regulation or a ceRNA-mediated relationship.`;
   if (e.interactionClass === 'miRNA-lncRNA') return `${src} is predicted to bind ${tgt}; ${e.direction} coexpression ${e.direction === 'negative' ? 'is consistent with sponge-like sequestration' : 'may reflect co-regulation'}.`;
   const canon = e.direction === 'negative' ? 'consistent with canonical miRNA repression of its target' : 'not consistent with simple repression — possibly co-regulation or a non-canonical effect';
-  return `${src} is predicted to bind ${tgt}${e.region ? ` in the ${e.region}` : ''}; the ${e.direction} coexpression is ${canon}.`;
+  const cerna = e.isCeRNA ? ' This is the mRNA leg of a ceRNA triad — the miRNA is also predicted to be sponged by a candidate ceRNA lncRNA, so its effect on this target may be buffered.' : '';
+  return `${src} is predicted to bind ${tgt}${e.region ? ` in the ${e.region}` : ''}; the ${e.direction} coexpression is ${canon}.${cerna}`;
 }
 
 // ---- helpers ----

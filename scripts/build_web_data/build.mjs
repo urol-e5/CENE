@@ -104,6 +104,18 @@ for (const sp of SPECIES) {
   const typeOf = (id) => nodeById.get(id)?.type ?? null;
   const statusOf = (id) => nodeById.get(id)?.status ?? null;
 
+  // A miRNA is "sequestered" when a candidate ceRNA lncRNA is predicted to bind
+  // it. Its miRNA→mRNA edges complete the ceRNA triad (lncRNA → miRNA → mRNA),
+  // so we flag them as ceRNA edges too — otherwise the "ceRNA only" filter shows
+  // just the lncRNA and miRNA and omits the mRNA the miRNA targets (issue #1).
+  const ceRNAsequesteredMiRNAs = new Set();
+  for (const r of edgeRows) {
+    const sN = nodeById.get(r.source), tN = nodeById.get(r.target);
+    if (!sN || !tN) continue;
+    if (sN.type === 'miRNA' && tN.type === 'lncRNA' && tN.status === 'ceRNA') ceRNAsequesteredMiRNAs.add(sN.id);
+    else if (tN.type === 'miRNA' && sN.type === 'lncRNA' && sN.status === 'ceRNA') ceRNAsequesteredMiRNAs.add(tN.id);
+  }
+
   const edges = [];
   let missingEndpoint = 0;
   for (let i = 0; i < edgeRows.length; i++) {
@@ -137,8 +149,12 @@ for (const sp of SPECIES) {
     const isEpiMiRNA = interactionClass === 'miRNA-mRNA'
       && ((sType === 'miRNA' && statusOf(target) === 'epi-machinery')
         || (tType === 'miRNA' && statusOf(source) === 'epi-machinery'));
-    const isCeRNA = sN.status === 'ceRNA' || tN.status === 'ceRNA';
     const miRNAendpoint = sType === 'miRNA' ? sN : (tType === 'miRNA' ? tN : null);
+    // A ceRNA edge is one directly touching a candidate ceRNA lncRNA (the sponge
+    // binding + its coexpression), OR a miRNA→mRNA edge of a sequestered miRNA —
+    // the third leg of the lncRNA → miRNA → mRNA triad (issue #1).
+    const isCeRNA = sN.status === 'ceRNA' || tN.status === 'ceRNA'
+      || (interactionClass === 'miRNA-mRNA' && miRNAendpoint !== null && ceRNAsequesteredMiRNAs.has(miRNAendpoint.id));
     const epiGeneId = statusOf(target) === 'epi-machinery' ? target : (statusOf(source) === 'epi-machinery' ? source : null);
     const epiCategory = epiGeneId ? (epiByTarget.get(`${code}|${epiGeneId}`)?.category ?? null) : null;
 
@@ -435,7 +451,7 @@ const dictionaries = {
     bpShared: 'Aligned base pairs shared in the predicted duplex.',
     evidence: 'binding+coexpression (predicted binding & significant coexpression) | coexpression (coexpression alone).',
     isEpiMiRNA: 'True if a miRNA targeting an epigenetic-machinery transcript.',
-    isCeRNA: 'True if an endpoint is a candidate ceRNA lncRNA.',
+    isCeRNA: 'True if part of a ceRNA triad: an endpoint is a candidate ceRNA lncRNA, or a miRNA→mRNA edge whose miRNA is sequestered by such a lncRNA.',
   },
 };
 writeJSON('dictionaries/network.json', dictionaries);
