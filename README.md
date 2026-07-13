@@ -2,7 +2,7 @@
 
 An interactive, static web resource that lets readers explore the predicted
 multi-layered epigenetic regulatory networks described in the manuscript
-**“Multi-Layered Epigenetic Regulation in Three Reef-Building Corals”**
+**"Cross-talk among miRNAs, lncRNAs, and DNA methylation in three coral species reveal conserved epigenetic regulatory architecture"**
 (*Acropora pulchra*, *Porites evermanni*, *Pocillopora tuahiniensis*).
 
 It is a publication companion to the analysis repository

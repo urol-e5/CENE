@@ -7,7 +7,7 @@ export interface Props {
   description?: string;
   active?: string;
 }
-const { title, description = 'Interactive companion to a study of multi-layered epigenetic regulation across three reef-building coral species.', active = '' } = Astro.props;
+const { title, description = 'Interactive companion to a study of cross-talk among miRNAs, lncRNAs, and DNA methylation in three coral species.', active = '' } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const link = (href: string) => (href === '/' ? `${base}/` : `${base}${href}`);
 const isActive = (href: string) => (href === '/' ? active === '/' : active.startsWith(href));
@@ -53,7 +53,7 @@ const isActive = (href: string) => (href === '/' ? active === '/' : active.start
         <div class="flex between" style="align-items:flex-start; gap:1.5rem;">
           <div style="max-width:60ch;">
             <strong>Coral Epigenetic Network Explorer</strong> — companion resource to
-            <em>“Multi-Layered Epigenetic Regulation in Three Reef-Building Corals.”</em>
+            <em>"Cross-talk among miRNAs, lncRNAs, and DNA methylation in three coral species reveal conserved epigenetic regulatory architecture."</em>
             All displayed interactions are <strong>computationally predicted</strong>
             (sequence complementarity and/or expression coexpression) and represent
             hypotheses for future experimental testing — not validated causal relationships.
