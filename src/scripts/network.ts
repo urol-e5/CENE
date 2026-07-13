@@ -183,7 +183,7 @@ function render(nodes: NodeRec[], edges: EdgeRec[]) {
   });
 
   // Run layout explicitly, then fit — guarantees the graph is centred on load.
-  const lay = cy.layout(layoutFor(els.length));
+  const lay = cy.layout(layoutFor(currentLayoutName()));
   lay.one('layoutstop', () => cy && cy.fit(undefined, 30));
   lay.run();
 
@@ -192,10 +192,46 @@ function render(nodes: NodeRec[], edges: EdgeRec[]) {
   cy.on('tap', (evt) => { if (evt.target === cy) { cy!.elements().removeClass('faded'); ($('btnExpand') as HTMLButtonElement).disabled = true; } });
 }
 
-function layoutFor(count: number) {
-  // Concentric keeps miRNAs central; cheap and predictable. Cancel long runs.
-  return { name: 'concentric', concentric: (n: NodeSingular) => (n.data('ntype') === 'miRNA' ? 3 : n.data('status') ? 2 : 1),
-    levelWidth: () => 1, minNodeSpacing: 18, animate: false } as any;
+type LayoutName = 'concentric' | 'cose' | 'breadthfirst' | 'circle' | 'grid';
+const LAYOUTS: LayoutName[] = ['concentric', 'cose', 'breadthfirst', 'circle', 'grid'];
+
+function currentLayoutName(): LayoutName {
+  const v = ($('fLayout') as HTMLSelectElement | null)?.value as LayoutName | undefined;
+  return v && LAYOUTS.includes(v) ? v : 'concentric';
+}
+
+// Map the chosen style to a Cytoscape layout config. All are built into
+// cytoscape core (no extensions), run un-animated, and rank miRNAs first so the
+// regulators stay visually prominent across every style.
+function layoutFor(name: LayoutName) {
+  const isMiRNA = (n: NodeSingular) => n.data('ntype') === 'miRNA';
+  switch (name) {
+    case 'cose':
+      // Force-directed: physics simulation spreads clusters and reveals structure.
+      return { name: 'cose', animate: false, nodeRepulsion: () => 12000, idealEdgeLength: () => 70,
+        nodeOverlap: 8, gravity: 0.3, numIter: 1000, componentSpacing: 60, randomize: true, fit: true, padding: 30 } as any;
+    case 'breadthfirst':
+      // Hierarchical tree, rooted on miRNAs — good for tracing regulatory cascades.
+      return { name: 'breadthfirst', directed: true, animate: false, spacingFactor: 1.1, grid: true,
+        roots: cy ? cy.nodes().filter(isMiRNA) : undefined } as any;
+    case 'circle':
+      return { name: 'circle', animate: false, minNodeSpacing: 12 } as any;
+    case 'grid':
+      return { name: 'grid', animate: false, avoidOverlap: true } as any;
+    case 'concentric':
+    default:
+      // Concentric keeps miRNAs central; cheap and predictable.
+      return { name: 'concentric', concentric: (n: NodeSingular) => (isMiRNA(n) ? 3 : n.data('status') ? 2 : 1),
+        levelWidth: () => 1, minNodeSpacing: 18, animate: false } as any;
+  }
+}
+
+// Re-run the layout on the already-rendered graph, without refetching/refiltering.
+function relayout() {
+  if (!cy) return;
+  const lay = cy.layout(layoutFor(currentLayoutName()));
+  lay.one('layoutstop', () => cy && cy.fit(undefined, 30));
+  lay.run();
 }
 
 // ---- detail panels ----
@@ -286,6 +322,8 @@ function renderLegend() {
 function writeURL(s: State) {
   const p = new URLSearchParams();
   p.set('sp', s.species);
+  const lay = currentLayoutName();
+  if (lay !== 'concentric') p.set('lay', lay);
   if (s.seed) p.set('seed', s.seed);
   if (s.miRNA) p.set('mir', s.miRNA);
   if (s.dir !== 'all') p.set('dir', s.dir);
@@ -299,6 +337,7 @@ function writeURL(s: State) {
 function applyURL() {
   const p = new URLSearchParams(location.search);
   if (p.get('sp')) ($('fSpecies') as HTMLSelectElement).value = p.get('sp')!;
+  if (p.get('lay') && LAYOUTS.includes(p.get('lay') as LayoutName)) ($('fLayout') as HTMLSelectElement).value = p.get('lay')!;
   if (p.get('seed')) ($('fSearch') as HTMLInputElement).value = p.get('seed')!;
   if (p.get('dir')) (document.querySelector<HTMLInputElement>(`.fDir[value="${p.get('dir')}"]`) || {} as any).checked = true;
   if (p.get('epi')) ($('fEpiOnly') as HTMLInputElement).checked = true;
@@ -421,6 +460,7 @@ async function init() {
   $('fSearch').addEventListener('change', debounce(() => build(readState())));
   $('fMiRNA').addEventListener('change', () => build(readState()));
   document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => applyPreset((c as HTMLElement).dataset.preset!)));
+  $('fLayout').addEventListener('change', () => { relayout(); writeURL(readState()); });
   $('btnFit').addEventListener('click', () => cy?.fit(undefined, 30));
   $('btnReset').addEventListener('click', () => { cy?.elements().removeClass('faded'); cy?.fit(undefined, 30); });
   $('btnExpand').addEventListener('click', () => { const sel = cy?.$(':selected'); if (sel && sel.length) { sel.closedNeighborhood().removeClass('faded'); } });
