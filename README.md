@@ -22,8 +22,11 @@ cross-species differences — and download the underlying evidence.
 The study integrates matched RNA-seq, small RNA-seq, and whole-genome bisulfite
 sequencing to characterize DNA methylation, miRNAs, and lncRNAs across three coral
 species and — for the first time in cnidarians — describes predicted **epi-miRNAs**
-(miRNAs targeting epigenetic machinery) and **competing endogenous RNA (ceRNA)**
-networks (lncRNAs predicted to sequester miRNAs).
+(miRNAs targeting epigenetic machinery) and candidate **competing endogenous RNA
+(ceRNA)** networks (lncRNAs predicted to sequester miRNAs). ceRNA sponging is only
+one of many possible lncRNA functions; most lncRNAs identified were *not* assigned to
+a ceRNA network, and the site's ceRNA framing reflects the question asked rather than
+these transcripts' full functional repertoire.
 
 ## Features / views
 
