@@ -377,6 +377,7 @@ function applyPreset(name: string) {
   const set = (id: string, v: boolean) => (($(id) as HTMLInputElement).checked = v);
   if (name === 'epimirna') set('fEpiOnly', true);
   else if (name === 'cerna') set('fCeOnly', true);
+  else if (name === 'lncmrna') document.querySelectorAll<HTMLInputElement>('.fClass').forEach((e) => (e.checked = e.value === 'lncRNA-mRNA'));
   else if (name === 'conserved') set('fConservedOnly', true);
   else if (name === 'mir100') ($('fSearch') as HTMLInputElement).value = 'mir-100';
   else if (name === 'negative') (document.querySelector<HTMLInputElement>('.fDir[value="negative"]')!).checked = true;

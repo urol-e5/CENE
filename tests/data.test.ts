@@ -72,6 +72,22 @@ describe.each(CODES)('network integrity — %s', (code) => {
       }
     }
   });
+
+  it('lncRNA–mRNA coexpression edges exist and carry no binding region (issue #2)', () => {
+    // The source tags these pairs with the sentinel "lncRNA_mRNA"; the Network
+    // Explorer region filter only knows 3UTR/5UTR/CDS/lncRNA, so a non-null
+    // region here silently hides every lncRNA–mRNA edge. Region must be null.
+    const lncMrna = net.edges.filter((e: any) => e.interactionClass === 'lncRNA-mRNA');
+    expect(lncMrna.length).toBeGreaterThan(0);
+    for (const e of lncMrna) expect(e.region, `${e.id} region`).toBeNull();
+  });
+
+  it('every edge region is a filterable binding region or null', () => {
+    const REGIONS = new Set(['3UTR', '5UTR', 'CDS', 'lncRNA']);
+    for (const e of net.edges) {
+      if (e.region !== null) expect(REGIONS.has(e.region), `${e.id} region ${e.region}`).toBe(true);
+    }
+  });
 });
 
 describe('epigenetic machinery', () => {
