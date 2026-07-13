@@ -9,6 +9,13 @@ const meth = readData('methylation.json');
 const col = (code: string) => SPECIES_COLOR[code];
 const bars = (key: string) => SPECIES.map((s) => ({ label: s.short, value: summary.charts[key].find((d: any) => d.code === s.code).value, color: col(s.code) }));
 
+// Genome metadata keyed by species code, sourced from summary.json (built from
+// scripts/build_web_data/lib.mjs). Powers the reference-genome quality table.
+const genomeByCode: Record<string, any> = Object.fromEntries(summary.species.map((s: any) => [s.code, s]));
+// N50 in Mbp: show as given without forced trailing zeros (17.8, 0.17, 10).
+const fmtN50 = (v: number) => `${Number(v.toFixed(2))} Mbp`;
+const ncbiUrl = (acc: string) => `https://www.ncbi.nlm.nih.gov/datasets/genome/${acc}/`;
+
 const cardRows: { key: string; label: string; fmt: (v: number) => string }[] = [
   { key: 'miRNAs', label: 'miRNAs', fmt: fmtInt },
   { key: 'lncRNAs', label: 'lncRNAs', fmt: fmtInt },
@@ -30,9 +37,63 @@ const cardRows: { key: string; label: string; fmt: (v: number) => string }[] = [
     </p>
     <div class="callout" style="margin:1rem 0;">
       <strong>Interpret cross-species differences cautiously.</strong> Genome assembly quality varies
-      substantially among the three taxa (see <a href="../methods">Methods</a>), which affects
-      transcript and interaction counts. Sequence conservation does not imply conserved regulatory function.
+      substantially among the three taxa (see the <a href="#genome-quality">reference genome quality</a>
+      table below and <a href="../methods">Methods</a>), which affects transcript and interaction counts.
+      Sequence conservation does not imply conserved regulatory function.
     </div>
+
+    <!-- Reference genome quality -->
+    <h2 id="genome-quality">Reference genome quality</h2>
+    <p class="small muted" style="max-width:82ch;">
+      The three species were mapped to genome assemblies of differing contiguity and completeness.
+      Assembly fragmentation (low N50) can fragment gene models and 3′/5′UTR annotation, which in turn
+      affects miRNA-binding prediction and transcript/interaction counts. Treat cross-species
+      differences in the tables below with this in mind. <em>P. tuahiniensis</em> reads were mapped to a
+      congeneric <em>P. meandrina</em> assembly.
+    </p>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Species</th>
+            <th>Reference genome assembly</th>
+            <th class="num">Genome size</th>
+            <th class="num">Contig/scaffold N50</th>
+            <th class="num">Protein-coding genes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {SPECIES.map((s) => {
+            const g = genomeByCode[s.code];
+            return (
+              <tr>
+                <td>
+                  <span class="flex" style="gap:0.4rem; align-items:center;">
+                    <span class="swatch" style={`background:${col(s.code)}; width:12px; height:12px;`}></span>
+                    <em>{s.short}</em>
+                  </span>
+                </td>
+                <td>
+                  <em>{g.assemblySpecies}</em>{' '}
+                  (<a href={g.referenceDoi}>{g.reference}</a>{g.accession ? <>; <a href={ncbiUrl(g.accession)}>{g.accession}</a></> : null}){' '}
+                  {g.genomeBrowser ? <a href={g.genomeBrowser} class="small">· browser</a> : null}
+                </td>
+                <td class="num">{fmtInt(g.genomeSizeMbp)} Mbp</td>
+                <td class="num">{fmtN50(g.n50Mbp)}</td>
+                <td class="num">{fmtInt(g.proteinCodingGenes)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted" style="margin-top:0.4rem;">
+      N50 is a contiguity metric: a higher value means the assembly is built from longer contiguous
+      pieces. Values here span two orders of magnitude (<em>P. evermanni</em> ≈ 0.17 Mbp vs.
+      <em>A. pulchra</em> ≈ 17.8 Mbp), so the <em>P. evermanni</em> assembly is substantially more
+      fragmented. BUSCO completeness and assembly level are reported in each source publication (see
+      <a href="../methods#limitations">Methods &amp; Caveats</a>).
+    </p>
 
     <!-- Summary cards -->
     <div class="grid grid-3">

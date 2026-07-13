@@ -23,6 +23,13 @@ export const SPECIES = [
     genomeSizeMbp: 518,
     n50Mbp: 17.8,
     genomeBrowser: null,
+    // Reference genome provenance for the genome-quality comparison table.
+    // `assemblySpecies` is the taxon of the assembly used (may differ from the
+    // study species — e.g. Ptuh reads were mapped to a P. meandrina genome).
+    assemblySpecies: 'Acropora pulchra',
+    reference: 'Conn et al., 2025',
+    referenceDoi: 'https://doi.org/10.46471/gigabyte.153',
+    accession: 'GCA_044231415.1',
   },
   {
     code: 'Peve',
@@ -34,6 +41,10 @@ export const SPECIES = [
     genomeSizeMbp: 497,
     n50Mbp: 0.17,
     genomeBrowser: 'https://www.genoscope.cns.fr/corals/genomes.html',
+    assemblySpecies: 'Porites evermanni',
+    reference: 'Noel et al., 2023',
+    referenceDoi: 'https://doi.org/10.1186/s13059-023-02960-7',
+    accession: 'GCA_942486025.1',
   },
   {
     code: 'Ptuh',
@@ -45,6 +56,10 @@ export const SPECIES = [
     genomeSizeMbp: 377,
     n50Mbp: 10,
     genomeBrowser: null,
+    assemblySpecies: 'Pocillopora meandrina',
+    reference: 'Stephens et al., 2022',
+    referenceDoi: 'https://doi.org/10.1093/gigascience/giac098',
+    accession: null,
   },
 ];
 
